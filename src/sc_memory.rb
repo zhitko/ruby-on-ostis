@@ -24,27 +24,16 @@ module Sc
       @last[x]
     end
 
-    class MemResults < Array
-      def initialize _mem
-        @mem = _mem
-      end
-      def method_missing _meth, *_prms
-        if _prms.empty?
-          return @mem. if @mem.respond_to(_meth)
-        raise RuntimeError
-      end
-    end
-
     def updateMemClass
       (self.class.public_instance_methods - NOT_MODIFIED_METHODS - Sc::ScMemory.superclass.methods).each{ |method|
-        puts method
+        #puts method
       }
     end
 
     private :updateMemClass
     NOT_MODIFIED_METHODS = [:initialize, :each, :[], :erase_el, :del, :mem_clear,
     :mem_empty?, :mem_has?, :mem_include?, :find_el_idtf, :find_el_uri, :load_file,
-    :dump_file, :<<]#.push(Scs::ScMemory.superclass.methods)
+    :dump_file, :<<]
 
 =begin
 * получение элемента по его идентификатору @mem[id]
@@ -153,7 +142,7 @@ module Sc
     end
     
     def gen3_f_a_f(_el1id, _types, _el3id)
-      add_elements(Sc::ScArc.new(_el1id, _el3id, _types))
+      add_elements(Sc::ScArc.new(@mem[_el1id], @mem[_el3id], _types))
     end
     
     def create_arc_uri(_uri, _el1id, _el3id, *_types)
@@ -170,18 +159,16 @@ module Sc
       
     end 
   end
-end
 
-=begin
-m = Scs::ScMemory::instance
-n1 = Scs::ScNode.new
-n2 = Scs::ScNode.new
-a1 = Scs::ScArc.new n1, n2
-n3 = Scs::ScNode.new
-a2 = Scs::ScArc.new n3, a1
-m.add n1, n2, a1, n3, a2
-puts Scs::ScMemory::instance.inspect
-#m.del a1.id
-m.del n1.id
-puts Scs::ScMemory::instance.inspect
-=end
+  class MemResults < Array
+    def initialize _mem
+      @mem = _mem
+    end
+
+    def method_missing (_meth, *_prms)
+      #if _prms.empty?
+      #  return @mem. if @mem.respond_to(_meth)
+      #raise RuntimeError
+    end
+  end
+end

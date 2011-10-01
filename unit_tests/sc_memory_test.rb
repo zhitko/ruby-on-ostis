@@ -2,7 +2,7 @@
 
 unless $:.include? File.dirname(__FILE__)
   $:.unshift(File.dirname(__FILE__))
-  $:.unshift File.expand_path('../',File.dirname(__FILE__))
+  $:.unshift File.expand_path('../src/',File.dirname(__FILE__))
 end
 
 require "test/unit"
