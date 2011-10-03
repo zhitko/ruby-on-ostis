@@ -1,5 +1,28 @@
 ﻿# -*- coding: utf-8 -*-
 
+# This source file is part of OSTIS (Open Semantic Technology for Intelligent Systems)
+# For the latest info, see http://www.ostis.net
+#
+# Author::    Vladimir Zhitko  (mailto:zhitko.vladimir@gmail.com)
+# Date::      01.10.2011
+# Copyright:: Copyright (c) 2011 OSTIS
+# License::   GNU Lesser General Public License
+#
+# OSTIS is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# OSTIS is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with OSTIS.  If not, see <http://www.gnu.org/licenses/>.
+#
+# Modified::
+
 $:.unshift(File.dirname(__FILE__)) unless $:.include? File.dirname(__FILE__)
 
 require 'Singleton'
@@ -7,23 +30,52 @@ require 'sc_elements'
 require 'sc_errors'
 
 module Sc
-  
+
+  # Class implements search results in memory
+  # It delegate search methods for functional style programming
+  # realized in method_missing
+  class MemResults < Array
+    # Initialize method may get memory class or not
+    def initialize _mem=nil
+      @mem = _mem || Sc::ScMemory.instance
+    end
+
+    # Method delegate unknown methods to ScMemory object if it respond it
+    # If method (_meth) get params (_prms) simply delegate to memory object
+    # If method hasn't params call this method in cycle with currents elements as input params
+    def method_missing (_meth, *_prms)
+      raise ScMemoryException unless @mem.public_method_defined? _meth
+      res = MemResults.new
+      if _prms.empty?
+        self.each{ |x|
+          res << @mem.send(_meth, *x).to_a
+        }
+      else
+        res << @mem.send(_meth, *_prms).to_a
+      end
+      res
+    end
+  end
+
+  # Class ScMemory hold and manage sc-elements
+  # Class is singleton
+  # TODO: in future needs to make this class as interface or proxy
   class ScMemory
     include Singleton
 
+    # Hash map with all elements holds in memory
+    # link ID with ScElement
     attr_reader :mem
 
+    # Initialize memory object
     def initialize
       @mem = Hash.new
       @arcs = Hash.new
-      @last = []
       updateMemClass
     end
 
-    def [](x)
-      @last[x]
-    end
-
+    # This method update instance methods to support functional style programming
+    # TODO: Do it cool (update memory methods)
     def updateMemClass
       (self.class.public_instance_methods - NOT_MODIFIED_METHODS - Sc::ScMemory.superclass.methods).each{ |method|
         #puts method
@@ -31,17 +83,20 @@ module Sc
     end
 
     private :updateMemClass
+    # List of memory methods witch shouldn't be updated
     NOT_MODIFIED_METHODS = [:initialize, :each, :[], :erase_el, :del, :mem_clear,
     :mem_empty?, :mem_has?, :mem_include?, :find_el_idtf, :find_el_uri, :load_file,
     :dump_file, :<<]
 
-=begin
-* получение элемента по его идентификатору @mem[id]
-* поиск элементов по дуге @mem[id].beg @mem[id].end
-* поиск входящих дуг в узел @arcs[id][:to], выходящих дуг @arcs[id][:from]
-* удаление узла @mem[id].remove, @arcs[id][:from]... получить входящие и выходящие дуги и так же удалить (рекурсия)
-* для удаления дуги получаем из хэша @mem (удаляем) ее начальный и конечный элемент и удаляем ее вхождение в хэше @arcs
-=end
+    # Method to add ScElements to memory
+    # Input:
+    # 1. els - lists of ScElements
+    # Some phase in russian:
+    #* получение элемента по его идентификатору @mem[id]
+    #* поиск элементов по дуге @mem[id].beg @mem[id].end
+    #* поиск входящих дуг в узел @arcs[id][:to], выходящих дуг @arcs[id][:from]
+    #* удаление узла @mem[id].remove, @arcs[id][:from]... получить входящие и выходящие дуги и так же удалить (рекурсия)
+    #* для удаления дуги получаем из хэша @mem (удаляем) ее начальный и конечный элемент и удаляем ее вхождение в хэше @arcs
     def add_elements(*els)
       added = []
       els.flatten.each{|x|
@@ -62,32 +117,39 @@ module Sc
 
     alias << add_elements
     alias add add_elements
-    
-    def erase_el(id)
-      el = @mem.delete(id)
-      el.del
-      if el.class == Sc::ScArc
-        if @arcs.key? el.beg.id
-          @arcs[el.beg.id][:from] -= [id]
-          @arcs.delete el.beg.id if @arcs[el.beg.id][:from].size == 0 and @arcs[el.beg.id][:to].size == 0
-        end
-        if @arcs.key? el.end.id
-          @arcs[el.end.id][:to] -= [id]
-          @arcs.delete el.end.id if @arcs[el.end.id][:from].size == 0 and @arcs[el.end.id][:to].size == 0
-        end
-      end
 
-      return self unless @arcs.key? id
-      arcs = @arcs.delete id
-      arcs = arcs[:from] + arcs[:to]
-      arcs.each { |x|
-        erase_el(x)
+    # Method to delete sc-elements
+    # Input:
+    # 1. _ids - list of IDs of ScElements
+    def erase_el(*_ids)
+      _ids.flatten.each{ |id|
+        next unless @mem.key? id
+        el = @mem.delete(id)
+        el.del
+        if el.class == Sc::ScArc
+          if @arcs.key? el.beg.id
+            @arcs[el.beg.id][:from] -= [id]
+            @arcs.delete el.beg.id if @arcs[el.beg.id][:from].size == 0 and @arcs[el.beg.id][:to].size == 0
+          end
+          if @arcs.key? el.end.id
+            @arcs[el.end.id][:to] -= [id]
+            @arcs.delete el.end.id if @arcs[el.end.id][:from].size == 0 and @arcs[el.end.id][:to].size == 0
+          end
+        end
+
+        return self unless @arcs.key? id
+        arcs = @arcs.delete id
+        arcs = arcs[:from] + arcs[:to]
+        arcs.each { |x|
+          erase_el(x)
+        }
+        self
       }
-      self
     end
 
     alias del erase_el
 
+    # Method to clear all memory
     def mem_clear
       @arcs.clear
       @mem.each {|key, x|
@@ -97,24 +159,30 @@ module Sc
       self
     end
 
+    # Is memory empty?
     def mem_empty?
       @arcs.empty? and @mem.empty?
     end
 
+    # Is memory have a sc-element with current id
     def mem_include? id
       @mem.key? id
     end
 
     alias mem_has? mem_include?
 
-# Search sc-frames functions
-    
+
+    # =Search sc-frames functions=
+
+    # Method to search element by its string identifier
+    # TODO: think and do search by idtf (last part of URI)
     def find_el_idtf(idtf)
       #@last =
     end
 
+    # Method to search element by its URI
     def find_el_uri(uri)
-      x = Sc::ScElement.new(uri).id
+      x = Sc::ScElement.new(uri.to_s).id
       add x unless mem_has? x.id
       x.id
     end
@@ -131,44 +199,52 @@ module Sc
     #
     #end
     
-# Generate sc-frames functions
+    # =Generate sc-frames functions=
 
+    # Method to create new ScNode
+    # Input:
+    # 1. _types - list of sc-types
     def create_el(*_types)
       add_elements(Sc::ScNode.new(_types.flatten))
     end
-    
+
+    # Method to create new Node by URI
+    # Input:
+    # 1. _uri - String URI
+    # 2. _types - list of sc-types
     def create_el_uri(_uri, *_types)
       add_elements(Sc::ScNode.new(_uri, _types.flatten))
     end
-    
+
+    # Method to generate arc between two sc-elements
+    # Input:
+    # 1. _el1id - first element ID
+    # 2. _types - list of sc-types of arc
+    # 3. _el3id - second element ID
     def gen3_f_a_f(_el1id, _types, _el3id)
-      add_elements(Sc::ScArc.new(@mem[_el1id], @mem[_el3id], _types))
+      add_elements(Sc::ScArc.new(@mem[_el1id], @mem[_el3id], _types.flatten))
     end
-    
+
+    # Method to generate arc between two sc-elements and set URI to arc
+    # Input:
+    # 1. _uri - String URI of generated arc
+    # 2. _el1id - first element ID
+    # 3. _types - list of sc-types of arc
+    # 4. _el3id - second element ID
     def create_arc_uri(_uri, _el1id, _el3id, *_types)
       add_elements(Sc::ScArc.new(_uri, _el1id, _el3id, _types.flatten))
     end
     
-# Functions for work to load and dump data to files
-    
+    # =Functions for work to load and dump data to files=
+
+    # Method to load sc-frame from local file
+    # TODO: do it
     def load_file(path)
       
     end
     
-    def dump_file(path)
+    def dump_file(frame, path)
       
     end 
-  end
-
-  class MemResults < Array
-    def initialize _mem
-      @mem = _mem
-    end
-
-    def method_missing (_meth, *_prms)
-      #if _prms.empty?
-      #  return @mem. if @mem.respond_to(_meth)
-      #raise RuntimeError
-    end
   end
 end
