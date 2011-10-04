@@ -36,7 +36,8 @@ module Sc
   # realized in method_missing
   class MemResults < Array
     # Initialize method may get memory class or not
-    def initialize _mem=nil
+    def initialize _data = [], _mem=nil
+      _data.each{|x| self << x}
       @mem = _mem || Sc::ScMemory.instance
     end
 
@@ -44,8 +45,12 @@ module Sc
     # If method (_meth) get params (_prms) simply delegate to memory object
     # If method hasn't params call this method in cycle with currents elements as input params
     def method_missing (_meth, *_prms)
+      # Raise error if sc-memory object don't know called method
       raise ScMemoryException unless @mem.public_method_defined? _meth
+      # create new result object
       res = MemResults.new
+      # Next, if method get some params then simple delegate to memory
+      # otherwise call method several times and give to it each of previous results
       if _prms.empty?
         self.each{ |x|
           res << @mem.send(_meth, *x).to_a
@@ -53,6 +58,7 @@ module Sc
       else
         res << @mem.send(_meth, *_prms).to_a
       end
+      # return results
       res
     end
   end
@@ -75,18 +81,21 @@ module Sc
     end
 
     # This method update instance methods to support functional style programming
+    # It's mean some methods should be return a object of MemResult's class, to alloy
+    # programmers write several methods in line
     # TODO: Do it cool (update memory methods)
     def updateMemClass
-      (self.class.public_instance_methods - NOT_MODIFIED_METHODS - Sc::ScMemory.superclass.methods).each{ |method|
+      (MODIFIED_METHODS).each{ |method|
         #puts method
       }
     end
 
     private :updateMemClass
     # List of memory methods witch shouldn't be updated
-    NOT_MODIFIED_METHODS = [:initialize, :each, :[], :erase_el, :del, :mem_clear,
-    :mem_empty?, :mem_has?, :mem_include?, :find_el_idtf, :find_el_uri, :load_file,
-    :dump_file, :<<]
+    MODIFIED_METHODS = [:add_elements, :add,
+    :find_el_idtf, :find_el_uri,
+    :create_el, :create_el_uri, :create_arc_uri,
+    :gen3_f_a_f]
 
     # Method to add ScElements to memory
     # Input:
@@ -187,18 +196,6 @@ module Sc
       x.id
     end
     
-    #def create_iterator(constr)
-    #
-    #end
-    #
-    #def sc_constraint_new(constr_uid, *arguments)
-    #
-    #end
-    #
-    #def search_one_shot(const)
-    #
-    #end
-    
     # =Generate sc-frames functions=
 
     # Method to create new ScNode
@@ -216,15 +213,6 @@ module Sc
       add_elements(Sc::ScNode.new(_uri, _types.flatten))
     end
 
-    # Method to generate arc between two sc-elements
-    # Input:
-    # 1. _el1id - first element ID
-    # 2. _types - list of sc-types of arc
-    # 3. _el3id - second element ID
-    def gen3_f_a_f(_el1id, _types, _el3id)
-      add_elements(Sc::ScArc.new(@mem[_el1id], @mem[_el3id], _types.flatten))
-    end
-
     # Method to generate arc between two sc-elements and set URI to arc
     # Input:
     # 1. _uri - String URI of generated arc
@@ -233,6 +221,15 @@ module Sc
     # 4. _el3id - second element ID
     def create_arc_uri(_uri, _el1id, _el3id, *_types)
       add_elements(Sc::ScArc.new(_uri, _el1id, _el3id, _types.flatten))
+    end
+
+    # Method to generate arc between two sc-elements
+    # Input:
+    # 1. _el1id - first element ID
+    # 2. _types - list of sc-types of arc
+    # 3. _el3id - second element ID
+    def gen3_f_a_f(_el1id, _types, _el3id)
+      add_elements(Sc::ScArc.new(@mem[_el1id], @mem[_el3id], _types.flatten))
     end
     
     # =Functions for work to load and dump data to files=
