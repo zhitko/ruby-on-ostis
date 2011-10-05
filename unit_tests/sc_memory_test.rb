@@ -48,9 +48,56 @@ class ScMemoryTest < Test::Unit::TestCase
   end
 
   def test_add_elements
-    n1 = @mem.create_el(:sc_node, :sc_const)[0]
-    n2 = @mem.create_el(:sc_node, :sc_const)[0]
-    a1 = @mem.gen3_f_a_f(n1, [:sc_arc, :sc_const], n2)[0]
+    assert_not_nil(n1 = @mem.create_el(:sc_node, :sc_const)[0])
+    assert_not_nil(n2 = @mem.create_el(:sc_node, :sc_const)[0])
+    assert_not_nil(a1 = @mem.gen3_f_a_f(n1, [:sc_arc, :sc_const], n2)[0])
+  end
 
+  def test_functional_style_programming
+    #assert_instance_of(Sc::MemResults,@mem.create_el(:sc_node, :sc_const))
+  end
+
+  def test_3_f_a_f
+    r = @mem.gen3_f_a_f(n1, ta, n2)
+  end
+
+  def test_3_f_a_a
+    r = @mem.gen3_f_a_a(n1, ta, tn)
+  end
+
+  def test_3_a_a_f
+    r = @mem.gen3_a_a_f(tn, ta, n2)
+  end
+
+  def test_5_a_a_a_a_a
+    r = @mem.gen5_a_a_a_a_a(tn,ta,tn,ta,tn)
+  end
+
+  def test_5_f_a_a_a_a
+    r = @mem.gen5_f_a_a_a_a(n1,ta,tn,ta,tn)
+  end
+
+  def test_5_a_a_f_a_a
+    r = @mem.gen5_a_a_f_a_a(tn,ta,n2,ta,tn)
+  end
+
+  def gen5_f_a_f_a_a
+    r = @mem.gen5_f_a_f_a_a(n1,ta,n2,ta,tn)
+  end
+
+  def test_5_a_a_a_a_f
+    r = @mem.gen5_a_a_a_a_f(tn,ta,tn,ta,n3)
+  end
+
+  def test_5_f_a_a_a_f
+    r = @mem.gen5_f_a_a_a_f(n1,ta,tn,ta,n3)
+  end
+
+  def test_5_a_a_f_a_f
+    r = @mem.gen5_a_a_f_a_f(tn,ta,n2,ta,n3)
+  end
+
+  def test_5_f_a_f_a_f
+    r = @mem.gen5_f_a_f_a_f(n1,ta,n2,ta,n3)
   end
 end

@@ -46,20 +46,49 @@ module Sc
     # If method hasn't params call this method in cycle with currents elements as input params
     def method_missing (_meth, *_prms)
       # Raise error if sc-memory object don't know called method
-      raise ScMemoryException unless @mem.public_method_defined? _meth
+      raise ScMemoryException unless @mem.class.public_method_defined? _meth
       # create new result object
       res = MemResults.new
+      res if self.empty?
       # Next, if method get some params then simple delegate to memory
       # otherwise call method several times and give to it each of previous results
       if _prms.empty?
-        self.each{ |x|
-          res << @mem.send(_meth, *x).to_a
-        }
+        if self[0].instance_of?(Array)
+          self.each{ |x|
+            res << @mem.send(_meth, *x).to_a
+          }
+        else
+          res << @mem.send(_meth, *(self.to_a)).to_a
+        end
       else
         res << @mem.send(_meth, *_prms).to_a
       end
       # return results
       res
+    end
+    
+    METH = [:reject, :map, :select]
+    def self.updateMemClass
+      (METH).each{ |m|
+        self.class_eval %Q{
+        def #{m.to_s}(*args, &block)
+          if self[0].instance_of?(Array)
+            MemResults.new super(*args, &block)
+          else
+            MemResults.new [self.to_a].#{m.to_s}(*args, &block)
+          end
+        end
+        }
+      }
+    end
+    updateMemClass
+    
+    def select(*args, &block)
+      if self[0].instance_of?(Array)
+        MemResults.new super(*args, &block)
+      else
+        MemResults.new [self.to_a].select(*args, &block)
+      end
     end
   end
 
@@ -68,34 +97,22 @@ module Sc
   # TODO: in future needs to make this class as interface or proxy
   class ScMemory
     include Singleton
-
-    # Hash map with all elements holds in memory
-    # link ID with ScElement
-    attr_reader :mem
-
+    
+    # List of memory methods witch shouldn't be updated
+    @@modified_methods = []
+    
     # Initialize memory object
     def initialize
+      # Hash map with all elements holds in memory
+      # link ID with ScElement
       @mem = Hash.new
+      # HashMap link ID with lists of output and input arcs
+      # looks like this:
+      # @arcs[elementID][:to][arcID] - input arcs
+      # or
+      # @arcs[elementID][:from][arcID] - output arcs
       @arcs = Hash.new
-      updateMemClass
     end
-
-    # This method update instance methods to support functional style programming
-    # It's mean some methods should be return a object of MemResult's class, to alloy
-    # programmers write several methods in line
-    # TODO: Do it cool (update memory methods)
-    def updateMemClass
-      (MODIFIED_METHODS).each{ |method|
-        #puts method
-      }
-    end
-
-    private :updateMemClass
-    # List of memory methods witch shouldn't be updated
-    MODIFIED_METHODS = [:add_elements, :add,
-    :find_el_idtf, :find_el_uri,
-    :create_el, :create_el_uri, :create_arc_uri,
-    :gen3_f_a_f]
 
     # Method to add ScElements to memory
     # Input:
@@ -109,6 +126,7 @@ module Sc
     def add_elements(*els)
       added = []
       els.flatten.each{|x|
+        added << x.id
         next unless (x.class.ancestors - x.class.included_modules).include?(Sc::ScElement)
         next if @mem.include? x.id
         next if x.deleted
@@ -119,13 +137,14 @@ module Sc
           @arcs[x.beg.id][:from] << x.id
           @arcs[x.end.id][:to] << x.id
         end
-        added << x.id
       }
       added
     end
+    @@modified_methods << :add_elements
 
     alias << add_elements
     alias add add_elements
+    @@modified_methods << :add
 
     # Method to delete sc-elements
     # Input:
@@ -195,6 +214,7 @@ module Sc
       add x unless mem_has? x.id
       x.id
     end
+    @@modified_methods << :find_el_uri
     
     # =Generate sc-frames functions=
 
@@ -204,6 +224,7 @@ module Sc
     def create_el(*_types)
       add_elements(Sc::ScNode.new(_types.flatten))
     end
+    @@modified_methods << :create_el
 
     # Method to create new Node by URI
     # Input:
@@ -212,6 +233,7 @@ module Sc
     def create_el_uri(_uri, *_types)
       add_elements(Sc::ScNode.new(_uri, _types.flatten))
     end
+    @@modified_methods << :create_el_uri
 
     # Method to generate arc between two sc-elements and set URI to arc
     # Input:
@@ -220,8 +242,9 @@ module Sc
     # 3. _types - list of sc-types of arc
     # 4. _el3id - second element ID
     def create_arc_uri(_uri, _el1id, _el3id, *_types)
-      add_elements(Sc::ScArc.new(_uri, _el1id, _el3id, _types.flatten))
+      add_elements(Sc::ScArc.new(_uri, @mem[_el1id], @mem[_el3id], _types.flatten))
     end
+    @@modified_methods << :create_arc_uri
 
     # Method to generate arc between two sc-elements
     # Input:
@@ -229,7 +252,75 @@ module Sc
     # 2. _types - list of sc-types of arc
     # 3. _el3id - second element ID
     def gen3_f_a_f(_el1id, _types, _el3id)
-      add_elements(Sc::ScArc.new(@mem[_el1id], @mem[_el3id], _types.flatten))
+      raise IncompatibleScTypes, "this element can't be an node" if _types.include? :sc_node
+      [_el1id, create_arc_uri(nil, _el1id, _el3id, _types.flatten)[0], _el3id].flatten
+    end
+    @@modified_methods << :gen3_f_a_f
+    
+    def gen3_f_a_a(_el1id, _types2, _types3)
+      raise IncompatibleScTypes, "this element can't be an arc" if _types3.include? :sc_arc
+      _el3id =  create_el(_types3.flatten)[0]
+      gen3_f_a_f(_el1id, _types2, _el3id)
+    end                         
+    @@modified_methods << :gen3_f_a_a
+    
+    def gen3_a_a_f(_types1, _types2, _el3id)
+      raise IncompatibleScTypes, "this element can't be an arc" if _types1.include? :sc_arc
+      _el1id = create_el(_types1.flatten)[0]
+      gen3_f_a_f(_el1id,_types2,_el3id)
+    end                 
+    @@modified_methods << :gen3_a_a_f
+    
+    def gen3_a_a_a(_types1, _types2, _types3)
+      raise IncompatibleScTypes, "this element can't be an arc" if _types1.include? :sc_arc
+      _el1id = create_el(_types1.flatten)[0]
+      gen3_a_a_f(_el1id, _types2, _types3)
+    end
+    
+    def gen5_f_a_f_a_f(_el1id, _types2, _el3id, _types4, _el5id)
+      r1 = gen3_f_a_f(_el1id, _types2, _el3id)
+      r2 = gen3_f_a_f(_el5id, _types4, r1[1]) 
+      [r1, r2[1], r2[0]].flatten
+    end 
+    
+    def gen5_f_a_a_a_f(_el1id, _types2, _types3, _types4, _el5id)
+      _el3id = create_el(_types3.flatten)[0]
+      gen5_f_a_f_a_f(_el1id, _types2, _el3id, _types4, _el5id)
+    end   
+    
+    def gen5_f_a_f_a_a(_el1id, _types2, _el3id, _types4, _types5)
+      _el5id = create_el(_types5.flatten)[0]
+      gen5_f_a_f_a_f(_el1id, _types2, _el3id, _types4, _el5id)
+    end   
+    
+    def gen5_a_a_f_a_f(_types1, _types2, _el3id, _types4, _el5id)
+      _el1id = create_el(_types1.flatten)[0]
+      gen5_f_a_f_a_f(_el1id, _types2, _el3id, _types4, _el5id)
+    end          
+    
+    def gen5_a_a_a_a_f(_types1, _types2, _types3, _types4, _el5id)
+      _el3id = create_el(_types3.flatten)[0]
+      _el1id = create_el(_types1.flatten)[0] 
+      gen5_f_a_f_a_f(_el1id, _types2, _el3id, _types4, _el5id)
+    end
+    
+    def gen5_f_a_a_a_a(_el1id, _types2, _types3, _types4, _types5)
+      _el3id = create_el(_types3.flatten)[0]
+      _el5id = create_el(_types5.flatten)[0]
+      gen5_f_a_f_a_f(_el1id, _types2, _el3id, _types4, _el5id)
+    end       
+    
+    def gen5_a_a_f_a_a(_types1, _types2, _el3id, _types4, _types5)
+      _el1id = create_el(_types1.flatten)[0]
+      _el5id = create_el(_types5.flatten)[0]
+      gen5_f_a_f_a_f(_el1id, _types2, _el3id, _types4, _el5id)
+    end      
+    
+    def gen5_a_a_a_a_a(_types1, _types2, _types3, _types4, _types5)
+      _el1id = create_el(_types1.flatten)[0]
+      _el3id = create_el(_types3.flatten)[0]
+      _el5id = create_el(_types5.flatten)[0]
+      gen5_f_a_f_a_f(_el1id, _types2, _el3id, _types4, _el5id)
     end
     
     # =Functions for work to load and dump data to files=
@@ -242,6 +333,42 @@ module Sc
     
     def dump_file(frame, path)
       
-    end 
+    end
+        
+    # This method update instance methods to support functional style programming
+    # It's mean some methods should be return a object of MemResult's class, to alloy
+    # programmers write several methods in line
+    def self.updateMemClass
+      (@@modified_methods).each{ |m|
+        _m = '_' + m.to_s
+        self.class_eval %Q{
+        alias #{_m} #{m.to_s}
+        def #{m.to_s}(*args, &block)
+        MemResults.new(#{_m}(*args, &block).to_a)  
+        end
+        }
+      }
+    end
+    updateMemClass
   end
 end
+
+tn = [:sc_node, :sc_const]
+ta = [:sc_arc, :sc_const]
+
+puts (n1 = Sc::ScMemory.instance.create_el(tn)[0])
+puts (n2 = Sc::ScMemory.instance.create_el(tn)[0])
+puts (n3 = Sc::ScMemory.instance.create_el(tn)[0])
+
+puts Sc::ScMemory.instance.gen3_f_a_f(n1, ta, n2).inspect
+puts Sc::ScMemory.instance.gen3_f_a_a(n1, ta, tn).inspect
+puts Sc::ScMemory.instance.gen3_a_a_f(tn, ta, n2).inspect
+
+puts Sc::ScMemory.instance.gen5_a_a_a_a_a(tn,ta,tn,ta,tn).inspect
+puts Sc::ScMemory.instance.gen5_f_a_a_a_a(n1,ta,tn,ta,tn).inspect
+puts Sc::ScMemory.instance.gen5_a_a_f_a_a(tn,ta,n2,ta,tn).inspect
+puts Sc::ScMemory.instance.gen5_f_a_f_a_a(n1,ta,n2,ta,tn).inspect
+puts Sc::ScMemory.instance.gen5_a_a_a_a_f(tn,ta,tn,ta,n3).inspect
+puts Sc::ScMemory.instance.gen5_f_a_a_a_f(n1,ta,tn,ta,n3).inspect
+puts Sc::ScMemory.instance.gen5_a_a_f_a_f(tn,ta,n2,ta,n3).inspect
+puts Sc::ScMemory.instance.gen5_f_a_f_a_f(n1,ta,n2,ta,n3).inspect
