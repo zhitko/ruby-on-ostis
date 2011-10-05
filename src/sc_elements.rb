@@ -116,7 +116,7 @@ module Sc
 
     # Logic method to check current sc-elements for some types
     def types?(*_types)
-      _types.each{ |x|
+      _types.flatten.each{ |x|
         return false unless @types.include? x
       }
       true

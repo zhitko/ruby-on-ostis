@@ -67,7 +67,7 @@ module Sc
       res
     end
     
-    METH = [:reject, :map, :select]
+    METH = [:collect, :map, :select, :reject, :inject]
     def self.updateMemClass
       (METH).each{ |m|
         self.class_eval %Q{
@@ -323,6 +323,53 @@ module Sc
       gen5_f_a_f_a_f(_el1id, _types2, _el3id, _types4, _el5id)
     end
     
+    # =Search functions=
+    
+    def search3_f_a_f(_el1id, _types2, _el3id)
+      (@arcs[_el1id][:from] & @arcs[_el3id][:to]).inject([]){|r, arc|
+        r << [_el1id, arc, _el3id] if @mem[arc].types? _types2
+      }
+    end
+    
+    def search3_f_a_a(_el1id, _types2, _types3)
+      @arcs[_el1id][:from].inject([]){|res, arc|
+        e3 = @mem[arc].end
+        res << [_el1id, arc, e3.id] if @mem[arc].types? _types2 and e3.types? _types3 
+      }
+    end
+    
+    def search3_a_a_f(_types1, _types2, _el3id)          
+      @arcs[_el3id][:to].inject([]){|res, arc|
+        e1 = @mem[arc].beg
+        res << [e1.id, arc, _el3id] if @mem[arc].types? _types2 and e1.types? _types1 
+      }
+    end
+    
+    #def search5_a_a_a_a_a(_types1,_types2,_types3,_types4,_types5)
+    #  #@arcs.inject([])
+    #end
+    #
+    #def search5_f_a_a_a_a(_el1id,_types2,_types3,_types4,_types5)       
+    #end
+    #
+    #def search5_a_a_f_a_a(_types1,_types2,_el3id,_types4,_types4)       
+    #end
+    #
+    #def search5_f_a_f_a_a(_el1id,_types2,_el3id,_types3,_types4)        
+    #end
+    #
+    #def search5_a_a_a_a_f(_types1,_types2,_types3,_types4,_el5id)         
+    #end
+    #
+    #def search5_f_a_a_a_f(_el1id,_types2,_types3,_types4,_el5id)       
+    #end
+    #
+    #def search5_a_a_f_a_f(_types1,_types2,_el3id,_types4,_el5id)        
+    #end
+    #
+    #def search5_f_a_f_a_f(_el1id,_types2,_el3id,_types4,_el5id)        
+    #end
+    
     # =Functions for work to load and dump data to files=
 
     # Method to load sc-frame from local file
@@ -355,15 +402,19 @@ end
 
 tn = [:sc_node, :sc_const]
 ta = [:sc_arc, :sc_const]
-
+puts '*'*10 + 'Gen' + '*'*10
 puts (n1 = Sc::ScMemory.instance.create_el(tn)[0])
 puts (n2 = Sc::ScMemory.instance.create_el(tn)[0])
 puts (n3 = Sc::ScMemory.instance.create_el(tn)[0])
-
+puts '*'*10 + 'Gen3' + '*'*10
 puts Sc::ScMemory.instance.gen3_f_a_f(n1, ta, n2).inspect
 puts Sc::ScMemory.instance.gen3_f_a_a(n1, ta, tn).inspect
 puts Sc::ScMemory.instance.gen3_a_a_f(tn, ta, n2).inspect
-
+puts Sc::ScMemory.instance.search3_f_a_f(n1,ta,n2).inspect
+puts Sc::ScMemory.instance.search3_f_a_a(n1,ta,tn).inspect
+puts Sc::ScMemory.instance.search3_a_a_f(tn,ta,n2).inspect
+#puts Sc::ScMemory.instance.inspect 
+puts '*'*10 + 'Gen5' + '*'*10
 puts Sc::ScMemory.instance.gen5_a_a_a_a_a(tn,ta,tn,ta,tn).inspect
 puts Sc::ScMemory.instance.gen5_f_a_a_a_a(n1,ta,tn,ta,tn).inspect
 puts Sc::ScMemory.instance.gen5_a_a_f_a_a(tn,ta,n2,ta,tn).inspect
