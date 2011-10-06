@@ -40,3 +40,12 @@ end
 class ScElementCreateException < ScMemoryException
   def message; "Fail during sc element building" end
 end
+
+
+=begin
+puts "Yoyoyo"
+raise IncompatibleScTypes.new(5, 4), "Tototo"
+puts "Nonono"
+rescue IncompatibleScTypes => e
+  puts e.backtrace
+=end
