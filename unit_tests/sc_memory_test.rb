@@ -48,9 +48,9 @@ class ScMemoryTest < Test::Unit::TestCase
   end
 
   def test_add_elements
-    assert_not_nil(n1 = @mem.create_el(:sc_node, :sc_const)[0])
-    assert_not_nil(n2 = @mem.create_el(:sc_node, :sc_const)[0])
-    assert_not_nil(a1 = @mem.gen3_f_a_f(n1, [:sc_arc, :sc_const], n2)[0])
+    assert_not_nil(n1 = @mem.create_el(:sc_node, :sc_const))
+    assert_not_nil(n2 = @mem.create_el(:sc_node, :sc_const))
+    assert_not_nil(a1 = @mem.gen3_f_a_f(n1, [:sc_arc, :sc_const], n2))
   end
 
   def test_functional_style_programming
@@ -58,46 +58,114 @@ class ScMemoryTest < Test::Unit::TestCase
   end
 
   def test_3_f_a_f
-    r = @mem.gen3_f_a_f(n1, ta, n2)
+    tn = [:sc_node, :sc_const]
+    ta = [:sc_arc, :sc_const]
+    n1 = @mem.create_el(tn)
+    n2 = @mem.create_el(tn)
+    g = @mem.gen3_f_a_f(n1, ta, n2)
+    s = @mem.search3_f_a_f(n1, ta, n2)
+    assert(g.sort == s.flatten.sort, "Trouble in 3_f_a_f: #{@mem.inspect}")
   end
 
   def test_3_f_a_a
-    r = @mem.gen3_f_a_a(n1, ta, tn)
+    tn = [:sc_node, :sc_const]
+    ta = [:sc_arc, :sc_const]
+    n1 = @mem.create_el(tn)
+    g = @mem.gen3_f_a_a(n1, ta, tn)
+    s = @mem.search3_f_a_a(n1, ta, tn)
+    assert(g.sort == s.flatten.sort, "Trouble in 3_f_a_a: #{@mem.inspect}")
   end
 
   def test_3_a_a_f
-    r = @mem.gen3_a_a_f(tn, ta, n2)
+    tn = [:sc_node, :sc_const]
+    ta = [:sc_arc, :sc_const]
+    n1 = @mem.create_el(tn)
+    g = @mem.gen3_a_a_f(tn, ta, n1)
+    s = @mem.search3_a_a_f(tn, ta, n1)
+    assert(g.sort == s.flatten.sort, "Trouble in 3_a_a_f: #{@mem.inspect}")
+  end
+
+  def test_3_a_a_a
+    tn = [:sc_node, :sc_const]
+    ta = [:sc_arc, :sc_const]
+    g = @mem.gen3_a_a_a(tn, ta, tn)
+    s = @mem.search3_a_a_a(tn, ta, tn)
+    assert(g.sort == s.flatten.sort, "Trouble in 3_a_a_f: #{@mem.inspect}")
   end
 
   def test_5_a_a_a_a_a
-    r = @mem.gen5_a_a_a_a_a(tn,ta,tn,ta,tn)
+    tn = [:sc_node, :sc_const]
+    ta = [:sc_arc, :sc_const]
+    g = @mem.gen5_a_a_a_a_a(tn,ta,tn,ta,tn)
+    s = @mem.search5_a_a_a_a_a(tn,ta,tn,ta,tn)
+    assert(s.include?(g), "Trouble in : #{@mem.inspect}")
   end
 
   def test_5_f_a_a_a_a
-    r = @mem.gen5_f_a_a_a_a(n1,ta,tn,ta,tn)
+    tn = [:sc_node, :sc_const]
+    ta = [:sc_arc, :sc_const]
+    n1 = @mem.create_el(tn)
+    g = @mem.gen5_f_a_a_a_a(n1,ta,tn,ta,tn)
+    s = @mem.search5_f_a_a_a_a(n1,ta,tn,ta,tn)
+    assert(s.include?(g), "Trouble in : #{@mem.inspect}")
   end
 
   def test_5_a_a_f_a_a
-    r = @mem.gen5_a_a_f_a_a(tn,ta,n2,ta,tn)
-  end
-
-  def gen5_f_a_f_a_a
-    r = @mem.gen5_f_a_f_a_a(n1,ta,n2,ta,tn)
+    tn = [:sc_node, :sc_const]
+    ta = [:sc_arc, :sc_const]
+    n1 = @mem.create_el(tn)
+    g = @mem.gen5_a_a_f_a_a(tn,ta,n1,ta,tn)
+    s = @mem.search5_a_a_f_a_a(tn,ta,n1,ta,tn)
+    assert(s.include?(g), "Trouble in : #{@mem.inspect}")
   end
 
   def test_5_a_a_a_a_f
-    r = @mem.gen5_a_a_a_a_f(tn,ta,tn,ta,n3)
+    tn = [:sc_node, :sc_const]
+    ta = [:sc_arc, :sc_const]
+    n1 = @mem.create_el(tn)
+    g = @mem.gen5_a_a_a_a_f(tn,ta,tn,ta,n1)
+    s = @mem.search5_a_a_a_a_f(tn,ta,tn,ta,n1)
+    assert(s.include?(g), "Trouble in : #{@mem.inspect}")
+  end
+
+  def gen5_f_a_f_a_a
+    tn = [:sc_node, :sc_const]
+    ta = [:sc_arc, :sc_const]
+    n1 = @mem.create_el(tn)
+    n2 = @mem.create_el(tn)
+    g = @mem.gen5_f_a_f_a_a(n1,ta,n2,ta,tn)
+    s = @mem.search5_f_a_f_a_a(n1,ta,n2,ta,tn)
+    assert(s.include?(g), "Trouble in : #{@mem.inspect}")
   end
 
   def test_5_f_a_a_a_f
-    r = @mem.gen5_f_a_a_a_f(n1,ta,tn,ta,n3)
+    tn = [:sc_node, :sc_const]
+    ta = [:sc_arc, :sc_const]
+    n1 = @mem.create_el(tn)
+    n2 = @mem.create_el(tn)
+    g = @mem.gen5_f_a_a_a_f(n1,ta,tn,ta,n2)
+    s = @mem.search5_f_a_a_a_f(n1,ta,tn,ta,n2)
+    assert(s.include?(g), "Trouble in : #{@mem.inspect}")
   end
 
   def test_5_a_a_f_a_f
-    r = @mem.gen5_a_a_f_a_f(tn,ta,n2,ta,n3)
+    tn = [:sc_node, :sc_const]
+    ta = [:sc_arc, :sc_const]
+    n1 = @mem.create_el(tn)
+    n2 = @mem.create_el(tn)
+    g = @mem.gen5_a_a_f_a_f(tn,ta,n1,ta,n2)
+    s = @mem.search5_a_a_f_a_f(tn,ta,n1,ta,n2)
+    assert(s.include?(g), "Trouble in : #{@mem.inspect}")
   end
 
   def test_5_f_a_f_a_f
-    r = @mem.gen5_f_a_f_a_f(n1,ta,n2,ta,n3)
+    tn = [:sc_node, :sc_const]
+    ta = [:sc_arc, :sc_const]
+    n1 = @mem.create_el(tn)
+    n2 = @mem.create_el(tn)
+    n3 = @mem.create_el(tn)
+    g = @mem.gen5_f_a_f_a_f(n1,ta,n2,ta,n3)
+    s = @mem.search5_f_a_f_a_f(n1,ta,n2,ta,n3)
+    assert(s.include?(g), "Trouble in : #{@mem.inspect}")
   end
 end

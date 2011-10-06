@@ -214,7 +214,7 @@ module Sc
       add x unless mem_has? x.id
       x.id
     end
-    @@modified_methods << :find_el_uri
+    #@@modified_methods << :find_el_uri
     
     # =Generate sc-frames functions=
 
@@ -222,18 +222,18 @@ module Sc
     # Input:
     # 1. _types - list of sc-types
     def create_el(*_types)
-      add_elements(Sc::ScNode.new(_types.flatten))
+      add_elements(Sc::ScNode.new(_types.flatten))[0]
     end
-    @@modified_methods << :create_el
+    #@@modified_methods << :create_el
 
     # Method to create new Node by URI
     # Input:
     # 1. _uri - String URI
     # 2. _types - list of sc-types
     def create_el_uri(_uri, *_types)
-      add_elements(Sc::ScNode.new(_uri, _types.flatten))
+      add_elements(Sc::ScNode.new(_uri, _types.flatten))[0]
     end
-    @@modified_methods << :create_el_uri
+    #@@modified_methods << :create_el_uri
 
     # Method to generate arc between two sc-elements and set URI to arc
     # Input:
@@ -242,9 +242,9 @@ module Sc
     # 3. _types - list of sc-types of arc
     # 4. _el3id - second element ID
     def create_arc_uri(_uri, _el1id, _el3id, *_types)
-      add_elements(Sc::ScArc.new(_uri, @mem[_el1id], @mem[_el3id], _types.flatten))
+      add_elements(Sc::ScArc.new(_uri, @mem[_el1id], @mem[_el3id], _types.flatten))[0]
     end
-    @@modified_methods << :create_arc_uri
+    #@@modified_methods << :create_arc_uri
 
     # Method to generate arc between two sc-elements
     # Input:
@@ -253,28 +253,28 @@ module Sc
     # 3. _el3id - second element ID
     def gen3_f_a_f(_el1id, _types, _el3id)
       raise IncompatibleScTypes, "this element can't be an node" if _types.include? :sc_node
-      [_el1id, create_arc_uri(nil, _el1id, _el3id, _types.flatten)[0], _el3id].flatten
+      [_el1id, create_arc_uri(nil, _el1id, _el3id, _types.flatten), _el3id].flatten
     end
     @@modified_methods << :gen3_f_a_f
     
     def gen3_f_a_a(_el1id, _types2, _types3)
       raise IncompatibleScTypes, "this element can't be an arc" if _types3.include? :sc_arc
-      _el3id =  create_el(_types3.flatten)[0]
+      _el3id =  create_el(_types3.flatten)
       gen3_f_a_f(_el1id, _types2, _el3id)
     end                         
     @@modified_methods << :gen3_f_a_a
     
     def gen3_a_a_f(_types1, _types2, _el3id)
       raise IncompatibleScTypes, "this element can't be an arc" if _types1.include? :sc_arc
-      _el1id = create_el(_types1.flatten)[0]
+      _el1id = create_el(_types1.flatten)
       gen3_f_a_f(_el1id,_types2,_el3id)
     end                 
     @@modified_methods << :gen3_a_a_f
     
     def gen3_a_a_a(_types1, _types2, _types3)
       raise IncompatibleScTypes, "this element can't be an arc" if _types1.include? :sc_arc
-      _el1id = create_el(_types1.flatten)[0]
-      gen3_a_a_f(_el1id, _types2, _types3)
+      _el1id = create_el(_types1.flatten)
+      gen3_f_a_a(_el1id, _types2, _types3)
     end
     
     def gen5_f_a_f_a_f(_el1id, _types2, _el3id, _types4, _el5id)
@@ -284,42 +284,42 @@ module Sc
     end 
     
     def gen5_f_a_a_a_f(_el1id, _types2, _types3, _types4, _el5id)
-      _el3id = create_el(_types3.flatten)[0]
+      _el3id = create_el(_types3.flatten)
       gen5_f_a_f_a_f(_el1id, _types2, _el3id, _types4, _el5id)
     end   
     
     def gen5_f_a_f_a_a(_el1id, _types2, _el3id, _types4, _types5)
-      _el5id = create_el(_types5.flatten)[0]
+      _el5id = create_el(_types5.flatten)
       gen5_f_a_f_a_f(_el1id, _types2, _el3id, _types4, _el5id)
     end   
     
     def gen5_a_a_f_a_f(_types1, _types2, _el3id, _types4, _el5id)
-      _el1id = create_el(_types1.flatten)[0]
+      _el1id = create_el(_types1.flatten)
       gen5_f_a_f_a_f(_el1id, _types2, _el3id, _types4, _el5id)
     end          
     
     def gen5_a_a_a_a_f(_types1, _types2, _types3, _types4, _el5id)
-      _el3id = create_el(_types3.flatten)[0]
-      _el1id = create_el(_types1.flatten)[0] 
+      _el3id = create_el(_types3.flatten)
+      _el1id = create_el(_types1.flatten) 
       gen5_f_a_f_a_f(_el1id, _types2, _el3id, _types4, _el5id)
     end
     
     def gen5_f_a_a_a_a(_el1id, _types2, _types3, _types4, _types5)
-      _el3id = create_el(_types3.flatten)[0]
-      _el5id = create_el(_types5.flatten)[0]
+      _el3id = create_el(_types3.flatten)
+      _el5id = create_el(_types5.flatten)
       gen5_f_a_f_a_f(_el1id, _types2, _el3id, _types4, _el5id)
     end       
     
     def gen5_a_a_f_a_a(_types1, _types2, _el3id, _types4, _types5)
-      _el1id = create_el(_types1.flatten)[0]
-      _el5id = create_el(_types5.flatten)[0]
+      _el1id = create_el(_types1.flatten)
+      _el5id = create_el(_types5.flatten)
       gen5_f_a_f_a_f(_el1id, _types2, _el3id, _types4, _el5id)
     end      
     
     def gen5_a_a_a_a_a(_types1, _types2, _types3, _types4, _types5)
-      _el1id = create_el(_types1.flatten)[0]
-      _el3id = create_el(_types3.flatten)[0]
-      _el5id = create_el(_types5.flatten)[0]
+      _el1id = create_el(_types1.flatten)
+      _el3id = create_el(_types3.flatten)
+      _el5id = create_el(_types5.flatten)
       gen5_f_a_f_a_f(_el1id, _types2, _el3id, _types4, _el5id)
     end
     
@@ -345,41 +345,102 @@ module Sc
       }
     end
     
-    #def search5_a_a_a_a_a(_types1,_types2,_types3,_types4,_types5)
-    #  #@arcs.inject([])
-    #end
-    #
-    #def search5_f_a_a_a_a(_el1id,_types2,_types3,_types4,_types5)       
-    #end
-    #
-    #def search5_a_a_f_a_a(_types1,_types2,_el3id,_types4,_types4)       
-    #end
-    #
-    #def search5_f_a_f_a_a(_el1id,_types2,_el3id,_types3,_types4)        
-    #end
-    #
-    #def search5_a_a_a_a_f(_types1,_types2,_types3,_types4,_el5id)         
-    #end
-    #
-    #def search5_f_a_a_a_f(_el1id,_types2,_types3,_types4,_el5id)       
-    #end
-    #
-    #def search5_a_a_f_a_f(_types1,_types2,_el3id,_types4,_el5id)        
-    #end
-    #
-    #def search5_f_a_f_a_f(_el1id,_types2,_el3id,_types4,_el5id)        
-    #end
-    
-    # =Functions for work to load and dump data to files=
-
-    # Method to load sc-frame from local file
-    # TODO: do it
-    def load_file(path)
-      
+    def search3_a_a_a(_types1, _types2, _types3)
+      @arcs.keys.inject([]){|r1,x1|
+        next r1 unless @mem[x1].types? _types1
+        r1 += @arcs[x1][:from].inject([]){|r2,x2|
+          next r2 unless @mem[x2].types? _types2 and @mem[x2].end.types? _types3
+          r2 << [x1, x2, @mem[x2].end.id]
+        }
+      }
     end
     
-    def dump_file(frame, path)
-      
+    def search5_a_a_a_a_a(_types1,_types2,_types3,_types4,_types5)
+      # iteration by 5-th element
+      @arcs.keys.inject([]){|r1, el|
+        next r1 unless @mem[el].types? _types5
+        # iteration by 4-th element
+        r = @arcs[el][:from].inject([]){|r2,x|
+          next r2 unless @mem[x].types?(_types4) and @mem[x].end.types?(_types2)
+          r2 << [@mem[x].end.id, x, el]
+        }
+        next r1 if r.nil? or r.empty?
+        # iteration by 2-nd element
+        r =  r.inject([]){|r3,x|
+          next r3 unless @mem[x[0]].end.types?(_types3) and @mem[x[0]].beg.types?(_types1)
+          r3 << [@mem[x[0]].beg.id, x[0], @mem[x[0]].end.id, x[1], x[2]]
+        }
+        next r1 if r.nil? or r.empty?
+        r1 += r
+      }
+    end
+    
+    def search5_f_a_a_a_a(_el1id,_types2,_types3,_types4,_types5)
+      @arcs[_el1id][:from].inject([]){|r1,x1|
+        next r1 unless @mem[x1].types? _types2 and @mem[x1].end.types? _types3
+        next r1 unless @arcs.key? x1
+        r = @arcs[x1][:to].inject([]){|r2,x2|
+          next r2 unless @mem[x2].types? _types4 and @mem[x2].beg.types? _types5
+          r2 << [_el1id, x1, @mem[x1].end.id, x2, @mem[x2].beg.id]
+        }
+        r1 += r
+      }
+    end
+    
+    def search5_a_a_f_a_a(_types1,_types2,_el3id,_types4,_types5)
+      @arcs[_el3id][:to].inject([]){|r1,x1|
+        next r1 unless @mem[x1].types? _types2 and @mem[x1].beg.types? _types1
+        next r1 unless @arcs.key? x1
+        r = @arcs[x1][:to].inject([]){|r2,x2|
+          next r2 unless @mem[x2].types? _types4 and @mem[x2].beg.types? _types5
+          r2 << [@mem[x1].beg.id, x1, _el3id, x2, @mem[x2].beg.id]
+        }
+        r1 += r
+      }
+    end
+    
+    def search5_a_a_a_a_f(_types1,_types2,_types3,_types4,_el5id)
+      @arcs[_el5id][:from].inject([]){|r1,x1|
+        next r1 unless @mem[x1].types? _types4 and @mem[x1].end.types? _types2
+        next r1 unless @mem[x1].end.beg.types? _types1 and @mem[x1].end.end.types? _types3
+        r1 << [@mem[x1].end.beg.id, @mem[x1].end.id, @mem[x1].end.end.id, x1, _el5id]
+      }
+    end
+    
+    def search5_f_a_f_a_a(_el1id,_types2,_el3id,_types4,_types5)
+      @arcs[_el1id][:from].inject([]){|r1,x1|
+        next r1 unless @mem[x1].end.id == _el3id and @mem[x1].types? _types2
+        next r1 unless @arcs.key? x1
+        r1 += @arcs[x1][:to].inject([]){|r2,x2|
+          next r2 unless @mem[x2].types? _types4 and @mem[x2].beg.types? _types5
+          r2 << [_el1id, x1, _el3id, x2, @mem[x2].beg.id]
+        }
+      }
+    end
+    
+    def search5_f_a_a_a_f(_el1id,_types2,_types3,_types4,_el5id)
+      @arcs[_el5id][:from].inject([]){|r1,x1|
+        next r1 unless @mem[x1].types? _types4 and @mem[x1].end.types? _types2
+        next r1 unless @arcs[_el1id][:from].include? @mem[x1].end.id and @mem[@mem[x1].end.id].end.types? _types3
+        r1 << [_el1id, @mem[x1].end.id, @mem[@mem[x1].end.id].end.id, x1, _el5id]
+      }
+    end
+    
+    def search5_a_a_f_a_f(_types1,_types2,_el3id,_types4,_el5id)
+      @arcs[_el5id][:from].inject([]){|r1,x1|
+        next r1 unless @mem[x1].types? _types4 and @mem[x1].end.types? _types2
+        next r1 unless @arcs[_el3id][:to].include? @mem[x1].end.id and @mem[@mem[x1].end.id].beg.types? _types1
+        r1 << [@mem[@mem[x1].end.id].beg.id, @mem[x1].end.id, _el3id, x1, _el5id]
+      }
+    end
+    
+    def search5_f_a_f_a_f(_el1id,_types2,_el3id,_types4,_el5id)
+      @arcs[_el5id][:from].inject([]){|r1,x1|
+        next r1 unless @mem[x1].types? _types4 and @mem[x1].end.types? _types2
+        next r1 unless @arcs[_el1id][:from].include? @mem[x1].end.id
+        next r1 unless @arcs[_el3id][:to].include? @mem[x1].end.id
+        r1 << [_el1id, @mem[x1].end.id, _el3id, x1, _el5id]
+      }
     end
         
     # This method update instance methods to support functional style programming
@@ -400,26 +461,32 @@ module Sc
   end
 end
 
+=begin
 tn = [:sc_node, :sc_const]
 ta = [:sc_arc, :sc_const]
 puts '*'*10 + 'Gen' + '*'*10
-puts (n1 = Sc::ScMemory.instance.create_el(tn)[0])
-puts (n2 = Sc::ScMemory.instance.create_el(tn)[0])
-puts (n3 = Sc::ScMemory.instance.create_el(tn)[0])
+puts '< ' + (n1 = Sc::ScMemory.instance.create_el(tn)).to_s
+puts '< ' + (n2 = Sc::ScMemory.instance.create_el(tn)).to_s
+puts '< ' + (n3 = Sc::ScMemory.instance.create_el(tn)).to_s
 puts '*'*10 + 'Gen3' + '*'*10
-puts Sc::ScMemory.instance.gen3_f_a_f(n1, ta, n2).inspect
-puts Sc::ScMemory.instance.gen3_f_a_a(n1, ta, tn).inspect
-puts Sc::ScMemory.instance.gen3_a_a_f(tn, ta, n2).inspect
-puts Sc::ScMemory.instance.search3_f_a_f(n1,ta,n2).inspect
-puts Sc::ScMemory.instance.search3_f_a_a(n1,ta,tn).inspect
-puts Sc::ScMemory.instance.search3_a_a_f(tn,ta,n2).inspect
-#puts Sc::ScMemory.instance.inspect 
+puts '< ' + Sc::ScMemory.instance.gen3_f_a_f(n1, ta, n2).inspect
+puts '> ' + Sc::ScMemory.instance.search3_f_a_f(n1,ta,n2).inspect
+puts '< ' + Sc::ScMemory.instance.gen3_f_a_a(n1, ta, tn).inspect
+puts '> ' + Sc::ScMemory.instance.search3_f_a_a(n1,ta,tn).inspect
+puts '< ' + Sc::ScMemory.instance.gen3_a_a_f(tn, ta, n2).inspect
+puts '> ' + Sc::ScMemory.instance.search3_a_a_f(tn,ta,n2).inspect
+puts '< ' + Sc::ScMemory.instance.gen3_a_a_a(tn,ta,tn).inspect
+puts '> ' + Sc::ScMemory.instance.search3_a_a_a(tn,ta,tn).inspect
 puts '*'*10 + 'Gen5' + '*'*10
-puts Sc::ScMemory.instance.gen5_a_a_a_a_a(tn,ta,tn,ta,tn).inspect
-puts Sc::ScMemory.instance.gen5_f_a_a_a_a(n1,ta,tn,ta,tn).inspect
-puts Sc::ScMemory.instance.gen5_a_a_f_a_a(tn,ta,n2,ta,tn).inspect
-puts Sc::ScMemory.instance.gen5_f_a_f_a_a(n1,ta,n2,ta,tn).inspect
-puts Sc::ScMemory.instance.gen5_a_a_a_a_f(tn,ta,tn,ta,n3).inspect
-puts Sc::ScMemory.instance.gen5_f_a_a_a_f(n1,ta,tn,ta,n3).inspect
-puts Sc::ScMemory.instance.gen5_a_a_f_a_f(tn,ta,n2,ta,n3).inspect
-puts Sc::ScMemory.instance.gen5_f_a_f_a_f(n1,ta,n2,ta,n3).inspect
+puts '< ' + Sc::ScMemory.instance.gen5_a_a_a_a_a(tn,ta,tn,ta,tn).inspect
+puts '> ' + Sc::ScMemory.instance.search5_a_a_a_a_a(tn,ta,tn,ta,tn).inspect
+puts '< ' + Sc::ScMemory.instance.gen5_f_a_a_a_a(n1,ta,tn,ta,tn).inspect
+puts '> ' + Sc::ScMemory.instance.search5_f_a_a_a_a(n1,ta,tn,ta,tn).inspect
+puts '< ' + Sc::ScMemory.instance.gen5_a_a_f_a_a(tn,ta,n2,ta,tn).inspect
+puts '< ' + Sc::ScMemory.instance.gen5_f_a_f_a_a(n1,ta,n2,ta,tn).inspect
+puts '< ' + Sc::ScMemory.instance.gen5_a_a_a_a_f(tn,ta,tn,ta,n3).inspect
+puts '< ' + Sc::ScMemory.instance.gen5_f_a_a_a_f(n1,ta,tn,ta,n3).inspect
+puts '< ' + Sc::ScMemory.instance.gen5_a_a_f_a_f(tn,ta,n2,ta,n3).inspect
+puts '< ' + Sc::ScMemory.instance.gen5_f_a_f_a_f(n1,ta,n2,ta,n3).inspect
+=begin
+=end
