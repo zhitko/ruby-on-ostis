@@ -44,16 +44,19 @@ module Sc
     # Redefined class method new to hide in it abstract method.
     # First argument may be a URI. If exits esc-element with the same
     # URI method return it, else create new one.
-    def self.new *prms
-      uri = (prms.size > 0 and prms[0].instance_of? String) ? prms[0].to_sym : nil
+    def self.new *_prms
+      uri = (_prms.size > 0 and _prms[0].instance_of? String) ? _prms[0].to_sym : nil
       @@uri2el ||= Hash.new
+      # URI was given
       unless uri.nil?
         unless @@uri2el.key? uri
-          @@uri2el[uri] = super(*(prms))
+          @@uri2el[uri] = super(*_prms)
         end
-        return @@uri2el[uri].proc(*prms)
+        return @@uri2el[uri].proc(*_prms)
       end
-      super(*([uri]+prms))
+      # URI is nill
+      prms = _prms.size==0 ? [nil] : (_prms[0].nil? ? _prms : ([nil]+_prms))
+      super(*prms)
     end
 
     # Method call to update current element
@@ -113,7 +116,7 @@ module Sc
 
     # Logic method to check current sc-elements for some types
     def types?(*_types)
-      _types.each{ |x|
+      _types.flatten.each{ |x|
         return false unless @types.include? x
       }
       true

@@ -30,11 +30,11 @@ class ScMemoryException < RuntimeError
 end
 
 class IncompatibleScTypes < ScMemoryException
-  def initialize element, type
+  def initialize element = nil, type=nil
     @element, @type = element, type
     super()
   end
-  def message; "Incompatible sc-types (#@element) for element (#@type)" end
+  def message; "Incompatible sc-types (#@type||'') for sc-element (#@element||'')" end
 end
 
 class ScElementCreateException < ScMemoryException
