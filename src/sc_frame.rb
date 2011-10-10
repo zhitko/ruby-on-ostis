@@ -26,10 +26,39 @@
 $:.unshift(File.dirname(__FILE__)) unless $:.include? File.dirname(__FILE__)
 
 require 'sc_errors'
+require 'sc_memory'
 
 module Sc
 
-  class ScFrame
+  module AbstractFrameFactory
+    def self.included c
+      c.class_eval %Q{
+      def initialize(*prms)
+        @mem = Sc::ScMemory.instance
+        super(*prms)
+      end
+                   }
+    end
 
+    def create()
+      raise NotImplementedError, "You should implement this method"
+    end
+  end
+
+  class ScsFrameFactory
+    include Sc::AbstractFrameFactory
+
+  end
+
+  module AbstractFrame
+    def dump
+      raise NotImplementedError, "You should implement this method"
+    end
+    def load
+      raise NotImplementedError, "You should implement this method"
+    end
+    def unload
+      raise NotImplementedError, "You should implement this method"
+    end
   end
 end
