@@ -276,45 +276,53 @@ module Sc
       _el1id = create_el(_types1.flatten)
       gen3_f_a_a(_el1id, _types2, _types3)
     end
+    @@modified_methods << :gen3_a_a_a
     
     def gen5_f_a_f_a_f(_el1id, _types2, _el3id, _types4, _el5id)
       r1 = gen3_f_a_f(_el1id, _types2, _el3id)
       r2 = gen3_f_a_f(_el5id, _types4, r1[1]) 
       [r1, r2[1], r2[0]].flatten
-    end 
+    end
+    @@modified_methods << :gen5_f_a_f_a_f
     
     def gen5_f_a_a_a_f(_el1id, _types2, _types3, _types4, _el5id)
       _el3id = create_el(_types3.flatten)
       gen5_f_a_f_a_f(_el1id, _types2, _el3id, _types4, _el5id)
-    end   
+    end
+    @@modified_methods << :gen5_f_a_a_a_f
     
     def gen5_f_a_f_a_a(_el1id, _types2, _el3id, _types4, _types5)
       _el5id = create_el(_types5.flatten)
       gen5_f_a_f_a_f(_el1id, _types2, _el3id, _types4, _el5id)
-    end   
+    end
+    @@modified_methods << :gen5_f_a_f_a_a
     
     def gen5_a_a_f_a_f(_types1, _types2, _el3id, _types4, _el5id)
       _el1id = create_el(_types1.flatten)
       gen5_f_a_f_a_f(_el1id, _types2, _el3id, _types4, _el5id)
-    end          
+    end
+    @@modified_methods << :gen5_a_a_f_a_f
     
     def gen5_a_a_a_a_f(_types1, _types2, _types3, _types4, _el5id)
       _el3id = create_el(_types3.flatten)
       _el1id = create_el(_types1.flatten) 
       gen5_f_a_f_a_f(_el1id, _types2, _el3id, _types4, _el5id)
     end
+    @@modified_methods << :gen5_a_a_a_a_f
     
     def gen5_f_a_a_a_a(_el1id, _types2, _types3, _types4, _types5)
       _el3id = create_el(_types3.flatten)
       _el5id = create_el(_types5.flatten)
       gen5_f_a_f_a_f(_el1id, _types2, _el3id, _types4, _el5id)
-    end       
+    end
+    @@modified_methods << :gen5_f_a_a_a_a
     
     def gen5_a_a_f_a_a(_types1, _types2, _el3id, _types4, _types5)
       _el1id = create_el(_types1.flatten)
       _el5id = create_el(_types5.flatten)
       gen5_f_a_f_a_f(_el1id, _types2, _el3id, _types4, _el5id)
-    end      
+    end
+    @@modified_methods << :gen5_a_a_f_a_a
     
     def gen5_a_a_a_a_a(_types1, _types2, _types3, _types4, _types5)
       _el1id = create_el(_types1.flatten)
@@ -322,6 +330,7 @@ module Sc
       _el5id = create_el(_types5.flatten)
       gen5_f_a_f_a_f(_el1id, _types2, _el3id, _types4, _el5id)
     end
+    @@modified_methods << :gen5_a_a_a_a_a
     
     # =Search functions=
     
@@ -330,6 +339,7 @@ module Sc
         r << [_el1id, arc, _el3id] if @mem[arc].types? _types2
       }
     end
+    @@modified_methods << :search3_f_a_f
     
     def search3_f_a_a(_el1id, _types2, _types3)
       @arcs[_el1id][:from].inject([]){|res, arc|
@@ -337,6 +347,7 @@ module Sc
         res << [_el1id, arc, e3.id] if @mem[arc].types? _types2 and e3.types? _types3 
       }
     end
+    @@modified_methods << :search3_f_a_a
     
     def search3_a_a_f(_types1, _types2, _el3id)          
       @arcs[_el3id][:to].inject([]){|res, arc|
@@ -344,6 +355,7 @@ module Sc
         res << [e1.id, arc, _el3id] if @mem[arc].types? _types2 and e1.types? _types1 
       }
     end
+    @@modified_methods << :search3_a_a_f
     
     def search3_a_a_a(_types1, _types2, _types3)
       @arcs.keys.inject([]){|r1,x1|
@@ -354,6 +366,7 @@ module Sc
         }
       }
     end
+    @@modified_methods << :search3_a_a_a
     
     def search5_a_a_a_a_a(_types1,_types2,_types3,_types4,_types5)
       # iteration by 5-th element
@@ -374,6 +387,7 @@ module Sc
         r1 += r
       }
     end
+    @@modified_methods << :search5_a_a_a_a_a
     
     def search5_f_a_a_a_a(_el1id,_types2,_types3,_types4,_types5)
       @arcs[_el1id][:from].inject([]){|r1,x1|
@@ -386,6 +400,7 @@ module Sc
         r1 += r
       }
     end
+    @@modified_methods << :search5_f_a_a_a_a
     
     def search5_a_a_f_a_a(_types1,_types2,_el3id,_types4,_types5)
       @arcs[_el3id][:to].inject([]){|r1,x1|
@@ -398,6 +413,7 @@ module Sc
         r1 += r
       }
     end
+    @@modified_methods << :search5_a_a_f_a_a
     
     def search5_a_a_a_a_f(_types1,_types2,_types3,_types4,_el5id)
       @arcs[_el5id][:from].inject([]){|r1,x1|
@@ -406,6 +422,7 @@ module Sc
         r1 << [@mem[x1].end.beg.id, @mem[x1].end.id, @mem[x1].end.end.id, x1, _el5id]
       }
     end
+    @@modified_methods << :search5_a_a_a_a_f
     
     def search5_f_a_f_a_a(_el1id,_types2,_el3id,_types4,_types5)
       @arcs[_el1id][:from].inject([]){|r1,x1|
@@ -417,6 +434,7 @@ module Sc
         }
       }
     end
+    @@modified_methods << :search5_f_a_f_a_a
     
     def search5_f_a_a_a_f(_el1id,_types2,_types3,_types4,_el5id)
       @arcs[_el5id][:from].inject([]){|r1,x1|
@@ -425,6 +443,7 @@ module Sc
         r1 << [_el1id, @mem[x1].end.id, @mem[@mem[x1].end.id].end.id, x1, _el5id]
       }
     end
+    @@modified_methods << :search5_f_a_a_a_f
     
     def search5_a_a_f_a_f(_types1,_types2,_el3id,_types4,_el5id)
       @arcs[_el5id][:from].inject([]){|r1,x1|
@@ -433,6 +452,7 @@ module Sc
         r1 << [@mem[@mem[x1].end.id].beg.id, @mem[x1].end.id, _el3id, x1, _el5id]
       }
     end
+    @@modified_methods << :search5_a_a_f_a_f
     
     def search5_f_a_f_a_f(_el1id,_types2,_el3id,_types4,_el5id)
       @arcs[_el5id][:from].inject([]){|r1,x1|
@@ -442,6 +462,7 @@ module Sc
         r1 << [_el1id, @mem[x1].end.id, _el3id, x1, _el5id]
       }
     end
+    @@modified_methods << :search5_f_a_f_a_f
         
     # This method update instance methods to support functional style programming
     # It's mean some methods should be return a object of MemResult's class, to alloy
