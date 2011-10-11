@@ -91,6 +91,7 @@ module Sc
     # Set content for sc-element
     def content=(_cont)
       @content = Sc::Content.new(_cont)
+      @content.type
     end
 
     alias set_content content=

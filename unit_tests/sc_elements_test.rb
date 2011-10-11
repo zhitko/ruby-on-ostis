@@ -58,6 +58,18 @@ class ScElementsTest < Test::Unit::TestCase
   end
 
   def test_content
-    raise 'Test not done'
+    n1 = Sc::ScElement.new()
+    n2 = Sc::ScElement.new()
+    c1 = Object.new
+    c2 = "Test content"
+    n1.content = c1
+    n2.set_content c2
+    assert_not_nil(n1.content,"Content not created for unknown object")
+    assert_not_nil(n2.content,"Content not created for known object")
+    assert_equal(n2.content.data,c2,"Content data not equal")
+    assert_instance_of(String, n1.content.data,"Content type wrong for unknown object")
+    assert_instance_of(c2.class, n2.content.data,"Content type wrong for known object")
+    assert_equal(n1.content.type, :sc_text, "Content sc-type wrong for unknown object")
+    assert_equal(n2.content.type, :sc_text, "Content sc-type wrong for known object")
   end
 end

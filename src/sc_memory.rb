@@ -199,6 +199,32 @@ module Sc
 
     alias mem_has? mem_include?
 
+    # Method to setup content to sc-element
+    # Input:
+    # 1. _id - ID of sc-element to setup content
+    # 2. _content - object witch is a content
+    # Output:
+    # sc_type of current content
+    def set_content(_id, _content)
+      return nil unless @mem.key? _id
+      @mem[_id].set_content _content
+    end
+
+    # Method to get content
+    # Return content data
+    def get_content _id
+      return nil unless @mem.key? _id
+      return nil if @mem[_id].content.nil?
+      @mem[_id].content.data
+    end
+
+    # Method to get content
+    # Return content data
+    def get_content_type _id
+      return nil unless @mem.key? _id
+      return nil if @mem[_id].content.nil?
+      @mem[_id].content.type
+    end
 
     # =Search sc-frames functions=
 
