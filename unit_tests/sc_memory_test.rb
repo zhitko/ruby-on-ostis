@@ -54,7 +54,25 @@ class ScMemoryTest < Test::Unit::TestCase
   end
 
   def test_functional_style_programming
-    #assert_instance_of(Sc::MemResults,@mem.create_el(:sc_node, :sc_const))
+    # TODO: test not full =(
+    tn = [:sc_node, :sc_const]
+    ta = [:sc_arc, :sc_const]
+    assert_instance_of(Sc::MemResults,@mem.gen3_a_a_a(tn, ta, tn))
+  end
+
+  def test_content
+    tn = [:sc_node, :sc_const]
+    n1 = @mem.create_el tn
+    n2 = @mem.create_el tn
+    c1 = Object.new
+    c2 = "Test content"
+    assert(@mem.get_content(n1)==nil,"Default content must be nill")
+    assert_equal(@mem.set_content(n1, c1),:sc_text,"SC-type wrong for unknown object")
+    assert_equal(@mem.set_content(n2, c2),:sc_text,"SC-type wrong for known object")
+    assert_not_nil(@mem.get_content(n1),"Content not setup for unknown object")
+    assert_not_nil(@mem.get_content(n1),"Content not setup for known object")
+    assert_equal(@mem.get_content_type(n1),:sc_text,"SC-type wrong for unknown object")
+    assert_equal(@mem.get_content_type(n2),:sc_text,"SC-type wrong for known object")
   end
 
   def test_3_f_a_f
