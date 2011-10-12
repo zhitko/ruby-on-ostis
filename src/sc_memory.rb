@@ -41,10 +41,16 @@ module Sc
       @mem = _mem || Sc::ScMemory.instance
     end
 
+    def set_memory _mem
+      @mem = _mem
+    end
+
+    alias mem= set_memory
+
     # Method delegate unknown methods to ScMemory object if it respond it
     # If method (_meth) get params (_prms) simply delegate to memory object
     # If method hasn't params call this method in cycle with currents elements as input params
-    def method_missing (_meth, *_prms)
+    def method_missing (_meth, *_prms, &_block)
       # Raise error if sc-memory object don't know called method
       raise ScMemoryException unless @mem.class.public_method_defined? _meth
       # create new result object
@@ -55,13 +61,13 @@ module Sc
       if _prms.empty?
         if self[0].instance_of?(Array)
           self.each{ |x|
-            res << @mem.send(_meth, *x).to_a
+            res << @mem.send(_meth, *x, &_block).to_a
           }
         else
-          res << @mem.send(_meth, *(self.to_a)).to_a
+          res << @mem.send(_meth, *(self.to_a), &_block).to_a
         end
       else
-        res << @mem.send(_meth, *_prms).to_a
+        res << @mem.send(_meth, *_prms, &_block).to_a
       end
       # return results
       res
@@ -171,7 +177,6 @@ module Sc
         arcs.each { |x|
           erase_el(x)
         }
-        self
       }
     end
 
